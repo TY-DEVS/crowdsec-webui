@@ -5,7 +5,6 @@ client/node_modules
 client/dist
 .DS_Store
 *.log
-.env
 /config.yaml
 /config.dev.yaml
 /certs
@@ -20,3 +19,4 @@ frontend/coverage
 client/coverage
 /dist
 /geonames
+config.bat
