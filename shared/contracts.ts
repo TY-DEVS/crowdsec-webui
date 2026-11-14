@@ -1035,3 +1035,113 @@ export interface BulkDeleteResult {
 export interface DeleteResult {
   message: string;
 }
+
+// --- Automated Remediation Playbooks (SOAR-Lite) ---
+
+export interface PlaybookTrigger {
+  scenario?: string;
+  scenario_pattern?: string;
+  scenarios?: string[];
+  events_count_threshold?: number;
+  origins?: string[];
+  include_simulated?: boolean;
+}
+
+export interface PlaybookAction {
+  type: 'ban' | 'captcha';
+  duration: string;
+  reason?: string;
+  scenario?: string;
+  scope?: 'fleet' | 'local';
+  target_instance_ids?: string[];
+}
+
+export interface PlaybookGuardrails {
+  never_ban_allowlisted?: boolean;
+  cooldown_seconds?: number;
+  rate_limit?: {
+    max_actions?: number;
+    window_seconds?: number;
+  };
+  simulation_mode?: boolean;
+}
+
+export interface PlaybookRule {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  priority: number;
+  trigger: PlaybookTrigger;
+  action: PlaybookAction;
+  guardrails: PlaybookGuardrails;
+  execution_count: number;
+  last_triggered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PlaybookExecutionStatus =
+  | 'executed'
+  | 'simulated'
+  | 'blocked_by_allowlist'
+  | 'blocked_by_cooldown'
+  | 'rate_limited'
+  | 'failed';
+
+export interface PlaybookExecutionRecord {
+  id: string;
+  playbook_id: string;
+  playbook_name: string;
+  alert_id?: string | number;
+  ip: string;
+  scenario: string;
+  events_count: number;
+  action_type: string;
+  action_duration: string;
+  scope: string;
+  status: PlaybookExecutionStatus;
+  message: string;
+  details?: Record<string, unknown>;
+  executed_at: string;
+}
+
+export interface UpsertPlaybookRuleRequest {
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  priority?: number;
+  trigger: PlaybookTrigger;
+  action: PlaybookAction;
+  guardrails?: PlaybookGuardrails;
+}
+
+export interface PlaybookEvaluationResult {
+  rule_id: string;
+  rule_name: string;
+  alert_id?: string | number;
+  ip: string;
+  matched: boolean;
+  match_reasons: string[];
+  status: PlaybookExecutionStatus;
+  action?: {
+    type: string;
+    duration: string;
+    scope: string;
+    reason: string;
+    scenario: string;
+    instances: string[];
+  };
+  error?: string;
+}
+
+export interface PlaybookListResponse {
+  rules: PlaybookRule[];
+  total: number;
+}
+
+export interface PlaybookExecutionsResponse {
+  executions: PlaybookExecutionRecord[];
+  total: number;
+}
+
