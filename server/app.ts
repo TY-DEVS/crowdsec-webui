@@ -72,6 +72,7 @@ import { registerApiRoutes } from './app/api-routes';
 import { registerSavedFilterRoutes } from './app/saved-filters';
 import { registerBrandingRoutes } from './app/branding-routes';
 import { createAllowlistService, registerAllowlistRoutes, type AllowlistService } from './app/allowlists';
+import { createPlaybookService, registerPlaybookRoutes, type PlaybookService } from './app/playbooks';
 import { applyBrandingToIndexHtml, getPublicBranding, serializeBrandingForScript } from './branding';
 import { createQueryService } from './app/query-service';
 import { createDeletionService } from './app/deletion-service';
@@ -252,6 +253,7 @@ export interface AppController {
   database: CrowdsecDatabase;
   lapiClient: LapiClient;
   lapiClients: Map<string, LapiClient>;
+  playbookService: PlaybookService;
   startBackgroundTasks: () => void;
   stopBackgroundTasks: () => void;
   getSyncStatus: () => SyncStatus;
@@ -1369,6 +1371,29 @@ export function createApp(options: CreateAppOptions = {}): AppController {
     allowlistService,
     isValidIpOrRange,
   });
+  const playbookService = createPlaybookService({
+    database,
+    allowlistService,
+    lapiClients,
+    primaryInstance,
+    instances: config.instances,
+    auditLog,
+    simulationMode: config.simulationsEnabled,
+    updateCacheDelta: (opts) => syncService.updateCacheDelta(opts),
+    writeDatabase: (operation) => syncWorker.runExclusive(operation),
+  });
+  registerPlaybookRoutes({
+    app,
+    basePath: config.basePath,
+    service: playbookService,
+    ensureAuth,
+    ensureCanManageEnforcement,
+  });
+  cacheUpdateListeners.add((_revision, _instanceIds) => {
+    void playbookService.evaluateRecentAlerts().catch((err) => {
+      console.error('Playbook evaluation error during cache update:', err.message);
+    });
+  });
   registerStatisticsRoutes({ app, config, statistics, ensureAuth, ensureCanManageSettings });
   registerAuditLogRoutes({ app, basePath: config.basePath, auditLog, ensureAuth });
   registerApiRoutes({
@@ -1745,6 +1770,7 @@ export function createApp(options: CreateAppOptions = {}): AppController {
     database,
     lapiClient,
     lapiClients,
+    playbookService,
     startBackgroundTasks,
     stopBackgroundTasks: () => {
       stopped = true;
