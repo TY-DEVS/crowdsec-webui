@@ -1036,6 +1036,7 @@ export interface DeleteResult {
   message: string;
 }
 
+<<<<<<< HEAD
 export interface AuditLogItem {
   time: string;
   user: string;
@@ -1188,5 +1189,6 @@ export interface PlaybookExecutionsResponse {
   executions: PlaybookExecutionRecord[];
   total: number;
 }
-}
+
+export * from './threat-intel';
 

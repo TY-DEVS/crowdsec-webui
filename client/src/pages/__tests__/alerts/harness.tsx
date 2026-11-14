@@ -238,6 +238,28 @@ vi.mock('../../../lib/api', () => {
       failed: [],
     })),
     fetchConfig: vi.fn(async () => createDefaultConfigResponse()),
+    fetchThreatIntelLookup: vi.fn(async (ip: string) => ({
+      ip,
+      score: 85,
+      confidence: 'high',
+      reputation: 'malicious',
+      badges: [
+        { id: 'scanner', label: 'Known Scanner', variant: 'warning' },
+        { id: 'vpn', label: 'VPN / Proxy', variant: 'secondary' },
+        { id: 'tor', label: 'Tor Node', variant: 'info' },
+      ],
+      behaviors: ['tcp:scan'],
+      providers: {
+        crowdsec: {
+          name: 'crowdsec',
+          score: 85,
+          confidence: 'high',
+          reputation: 'malicious',
+        },
+      },
+      cached: false,
+      cachedAt: '2026-03-23T11:00:00.000Z',
+    })),
   };
 });
 

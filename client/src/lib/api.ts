@@ -37,6 +37,7 @@ import type {
   SlimAlert,
   StatsAlert,
   StatsDecision,
+  ThreatIntelLookupResponse,
   UpdateMetricsSidebarPreferenceRequest,
   UpdateAllowlistsSidebarPreferenceRequest,
   UpdateStatisticsSidebarPreferenceRequest,
@@ -659,5 +660,10 @@ export function getAuditLogsExportUrl(filters: AuditLogQueryFilters = {}, format
     if (filters.q) searchParams.set('q', filters.q);
     searchParams.set('format', format);
     return apiUrl(`/api/audit-logs?${searchParams.toString()}`);
+}
+
+export async function fetchThreatIntelLookup(ip: string): Promise<ThreatIntelLookupResponse> {
+    return fetchJson<ThreatIntelLookupResponse>(`/api/threat-intel/lookup?ip=${encodeURIComponent(ip)}`, undefined, 'Failed to fetch threat intelligence');
+}
 }
 

@@ -179,3 +179,14 @@ export interface AllowlistedDecisionError extends Error {
 export interface WithChildren {
   children: ReactNode;
 }
+
+export type {
+  ThreatIntelBadge,
+  ThreatIntelBadgeVariant,
+  ThreatIntelConfidence,
+  ThreatIntelConfig,
+  ThreatIntelLookupResponse,
+  ThreatIntelProviderResult,
+  ThreatIntelReputation,
+} from '../../../shared/contracts';
+

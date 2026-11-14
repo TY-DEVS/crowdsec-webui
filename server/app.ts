@@ -1,3 +1,4 @@
+import { ThreatIntelService } from './threat-intel';
 import { StatisticsService } from './statistics-service';
 import { registerStatisticsRoutes } from './app/statistics-routes';
 import { PublishedRevisionLock } from './published-revision-lock';
@@ -243,6 +244,7 @@ export interface CreateAppOptions {
     | 'close'
   > & Partial<Pick<DatabaseSyncWorker, 'compareAlertDecisions' | 'runTransaction' | 'runIncrementalVacuum' | 'replaceAllowlists' | 'configureStatistics' | 'statisticsBatch' | 'acknowledgeStatistics'>>;
   attackLocationResolver?: AttackLocationResolver;
+  threatIntelService?: ThreatIntelService;
 }
 
 export interface AppController {
@@ -1396,7 +1398,9 @@ export function createApp(options: CreateAppOptions = {}): AppController {
   });
   registerStatisticsRoutes({ app, config, statistics, ensureAuth, ensureCanManageSettings });
   registerAuditLogRoutes({ app, basePath: config.basePath, auditLog, ensureAuth });
+  const threatIntelService = options.threatIntelService || new ThreatIntelService(config.threatIntel);
   registerApiRoutes({
+    threatIntelService,
     statistics,
     app,
     state: apiRouteState,

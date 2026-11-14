@@ -1,4 +1,6 @@
+import net from 'node:net';
 import type { Hono } from 'hono';
+import { ThreatIntelService } from '../threat-intel';
 import type {
   AddDecisionRequest,
   AlertRecord,
@@ -79,6 +81,7 @@ export interface ApiRouteDependencies extends Record<string, any> {
   lapiClients: Map<string, LapiClient>;
   analyticsQueryWorker: DatabaseQueryWorker;
   allowlistService: AllowlistService;
+  threatIntelService?: ThreatIntelService;
   state: ApiRouteState;
 }
 
@@ -165,6 +168,7 @@ export function registerApiRoutes(dependencies: ApiRouteDependencies): void {
     queryPaginatedDecisions,
     QueryWorkerTimeoutError,
     readUpdateCheckOverrides,
+    threatIntelService: customThreatIntelService,
     resetReconcileWindowState,
     refreshFullHistory,
     refreshLatestWindow,
@@ -195,6 +199,8 @@ export function registerApiRoutes(dependencies: ApiRouteDependencies): void {
     withInstanceName,
     decisionFromRow,
   } = dependencies;
+
+  const threatIntelService = customThreatIntelService || new ThreatIntelService(config.threatIntel);
 
   // Audit lists stay bounded so a large bulk operation cannot produce an
   // unusable log line; the requested/deleted counters remain exact.
@@ -1973,6 +1979,24 @@ app.get(`${config.basePath}/api/update-check`, ensureAuth, async (context) => {
     return context.json({ error: 'Update check failed' }, 500);
   }
 });
+
+app.get(`${config.basePath}/api/threat-intel/lookup`, ensureAuth, async (context) => {
+  const ip = context.req.query('ip')?.trim();
+  if (!ip) {
+    return context.json({ error: 'Missing required "ip" query parameter' }, 400);
+  }
+  if (net.isIP(ip) === 0) {
+    return context.json({ error: `Invalid IP address: "${ip}"` }, 400);
+  }
+  try {
+    const result = await threatIntelService.lookup(ip);
+    return context.json(result);
+  } catch (error: any) {
+    console.error('Threat intelligence lookup error:', error);
+    return context.json({ error: error?.message || 'Threat intelligence lookup failed' }, 500);
+  }
+});
+
 
 
 }

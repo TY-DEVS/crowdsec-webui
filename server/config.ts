@@ -4,7 +4,7 @@ import net from 'node:net';
 import path from 'node:path';
 import { isValidDateFormat, type DateFormat } from '../shared/date-format';
 import { parseDurationMs } from '../shared/duration';
-import type { ManagedSettingSource } from '../shared/contracts';
+import type { ManagedSettingSource, ThreatIntelConfig } from '../shared/contracts';
 export type { DateFormat } from '../shared/date-format';
 import { createCrowdsecAuthConfig, type CrowdsecAuthConfig } from './auth';
 import {
@@ -174,6 +174,7 @@ export interface RuntimeConfig {
   manualDecisionScenarios: string[];
   dashboardAuth: DashboardAuthConfig;
   instances: CrowdsecInstanceConfig[];
+  threatIntel: ThreatIntelConfig;
 }
 
 export function parseTimeZone(value: string | undefined): string | null {
@@ -545,6 +546,11 @@ function createRuntimeConfigFromEnvironment(env: NodeJS.ProcessEnv): RuntimeConf
     manualDecisionScenarios: [],
     dashboardAuth: parseDashboardAuthConfig(env),
     instances: [],
+    threatIntel: {
+      crowdsecCtiApiKey: env.CROWDSEC_CTI_API_KEY?.trim() || undefined,
+      abuseipdbApiKey: env.ABUSEIPDB_API_KEY?.trim() || undefined,
+      cacheTtlMs: env.THREAT_INTEL_CACHE_TTL ? parseRefreshInterval(env.THREAT_INTEL_CACHE_TTL) : undefined,
+    },
   };
 
   const instancesFile = env.CROWDSEC_INSTANCES_CONFIG_FILE?.trim();
