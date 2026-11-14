@@ -1036,7 +1036,6 @@ export interface DeleteResult {
   message: string;
 }
 
-<<<<<<< HEAD
 export interface AuditLogItem {
   time: string;
   user: string;

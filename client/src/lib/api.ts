@@ -665,5 +665,4 @@ export function getAuditLogsExportUrl(filters: AuditLogQueryFilters = {}, format
 export async function fetchThreatIntelLookup(ip: string): Promise<ThreatIntelLookupResponse> {
     return fetchJson<ThreatIntelLookupResponse>(`/api/threat-intel/lookup?ip=${encodeURIComponent(ip)}`, undefined, 'Failed to fetch threat intelligence');
 }
-}
 
