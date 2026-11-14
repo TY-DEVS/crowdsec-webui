@@ -1682,9 +1682,21 @@ export function createApp(options: CreateAppOptions = {}): AppController {
     return promise;
   }
 
-  function resolveOperationInstances(scope: 'all' | 'instance' | undefined, instanceId: string | undefined) {
+  function resolveOperationInstances(
+    scope: 'all' | 'instance' | 'selected' | undefined,
+    instanceId: string | undefined,
+    instanceIds?: string[],
+  ) {
     if (!scope) return [primaryInstance];
     if (scope === 'all') return config.instances;
+    if (scope === 'selected' || (instanceIds && instanceIds.length > 0)) {
+      const ids = new Set(instanceIds || []);
+      if (ids.size === 0) return { error: 'At least one valid instance_id is required when scope is selected' };
+      const matching = config.instances.filter((candidate) => ids.has(candidate.id));
+      return matching.length === ids.size
+        ? matching
+        : { error: 'At least one valid instance_id is required when scope is selected' };
+    }
     const instance = config.instances.find((candidate) => candidate.id === instanceId);
     return instance ? [instance] : { error: 'A valid instance_id is required when scope is instance' };
   }

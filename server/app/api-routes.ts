@@ -1194,7 +1194,7 @@ app.post(`${config.basePath}/api/cleanup/by-ip`, ensureAuth, async (context) => 
       return context.json({ error: 'Invalid IP address format' }, 400);
     }
 
-    const targets = resolveOperationInstances(body.scope, body.instance_id);
+    const targets = resolveOperationInstances(body.scope, body.instance_id, body.instance_ids);
     if ('error' in targets) return context.json({ error: targets.error }, 400);
     const results = await Promise.all(targets.map(async (instance: RuntimeConfig['instances'][number]) => {
       try {
@@ -1639,7 +1639,7 @@ app.post(`${config.basePath}/api/decisions`, ensureAuth, async (context) => {
     if ('error' in settings) return context.json({ error: settings.error }, 400);
     const { duration, reason, type, scenario } = settings;
 
-    const targets = resolveOperationInstances(body.scope, body.instance_id);
+    const targets = resolveOperationInstances(body.scope, body.instance_id, body.instance_ids);
     if ('error' in targets) return context.json({ error: targets.error }, 400);
     const bypassAllowlist = body.bypass_allowlist === true;
     // LAPI skips its allowlist check for alerts that already carry decisions,
@@ -1732,7 +1732,7 @@ app.post(`${config.basePath}/api/decisions/bulk-add`, ensureAuth, async (context
     if ('error' in settings) return context.json({ error: settings.error }, 400);
     const { duration, reason, type, scenario } = settings;
 
-    const targets = resolveOperationInstances(body.scope, body.instance_id);
+    const targets = resolveOperationInstances(body.scope, body.instance_id, body.instance_ids);
     if ('error' in targets) return context.json({ error: targets.error }, 400);
     const bypassAllowlist = body.bypass_allowlist === true;
     // Allowlisted values are skipped rather than failing the whole request,
