@@ -22,7 +22,7 @@ interface AddedDecisions {
     instanceIds: string[];
 }
 
-type BulkTarget = Pick<BulkAddDecisionRequest, 'scope' | 'instance_id'>;
+type BulkTarget = Pick<BulkAddDecisionRequest, 'scope' | 'instance_id' | 'instance_ids'>;
 type BulkBatch = BulkTarget & { values: string[] };
 type SkippedBatch = BulkTarget & { entries: BulkAddDecisionResponse['allowlisted'] };
 
@@ -87,6 +87,12 @@ export function AddDecisionModal({
     const { t } = useI18n();
     const [decision, setDecision] = useState<AddDecisionRequest>(() => ({ type: 'ban', ...initialDecision }));
     const [allInstances, setAllInstances] = useState(defaultAllInstances || !currentInstanceId);
+    const [selectedInstanceIds, setSelectedInstanceIds] = useState<Set<string>>(() => {
+        if (defaultAllInstances || !currentInstanceId) {
+            return new Set(instances.map((instance) => instance.id));
+        }
+        return new Set(currentInstanceId ? [currentInstanceId] : instances.map((instance) => instance.id));
+    });
     const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
     const [inProgress, setInProgress] = useState(false);
     const [retryInstances, setRetryInstances] = useState<InstanceOperationResult[]>([]);
@@ -111,7 +117,7 @@ export function AddDecisionModal({
 
     const targetInstances = !multipleInstances || allInstances
         ? instances
-        : instances.filter((instance) => instance.id === currentInstanceId);
+        : instances.filter((instance) => selectedInstanceIds.has(instance.id));
     const targetScenarioLists = targetInstances.map((instance) => (
         instance.manual_decision_scenarios?.length ? instance.manual_decision_scenarios : [DEFAULT_MANUAL_DECISION_SCENARIO]
     ));
@@ -124,7 +130,9 @@ export function AddDecisionModal({
         ? decision.scenario
         : scenarioOptions[0];
     const decisionValue = (decision.ip || '').trim();
-    const allowlistScope = multipleInstances && !allInstances && currentInstanceId ? currentInstanceId : 'all';
+    const allowlistScope = multipleInstances && !allInstances && selectedInstanceIds.size === 1
+        ? Array.from(selectedInstanceIds)[0]
+        : 'all';
     // A result only applies to the value and instances it was checked for.
     const allowlistMatches = allowlistCheck?.value === decisionValue && allowlistCheck.scope === allowlistScope
         ? allowlistCheck.matches
@@ -183,7 +191,9 @@ export function AddDecisionModal({
     const submitBulk = async (settings: Omit<AddDecisionRequest, 'ip'>) => {
         const target: BulkTarget = !multipleInstances ? {}
             : allInstances ? { scope: 'all' }
-                : { scope: 'instance', instance_id: currentInstanceId };
+                : selectedInstanceIds.size === 1
+                    ? { scope: 'instance', instance_id: Array.from(selectedInstanceIds)[0] }
+                    : { scope: 'selected', instance_ids: Array.from(selectedInstanceIds) };
         const batches = retrying ? bulkRetries
             : bulkSkipped.length > 0
                 ? bulkSkipped.map(({ entries, ...scope }) => ({ ...scope, values: entries.map(({ value }) => value) }))
@@ -250,7 +260,9 @@ export function AddDecisionModal({
             ? payload
             : allInstances
                 ? { ...payload, scope: 'all' }
-                : { ...payload, scope: 'instance', instance_id: currentInstanceId };
+                : selectedInstanceIds.size === 1
+                    ? { ...payload, scope: 'instance', instance_id: Array.from(selectedInstanceIds)[0] }
+                    : { ...payload, scope: 'selected', instance_ids: Array.from(selectedInstanceIds) };
         setInProgress(true);
         setErrorInfo(null);
         try {
@@ -385,14 +397,18 @@ export function AddDecisionModal({
                     />
                 </div>
                 {multipleInstances && (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                             <input
                                 type="checkbox"
                                 checked={allInstances}
                                 disabled={inProgress || !currentInstanceId || (bulk && (retrying || bulkSkipped.length > 0))}
                                 onChange={(event) => {
-                                    setAllInstances(event.target.checked);
+                                    const checked = event.target.checked;
+                                    setAllInstances(checked);
+                                    setSelectedInstanceIds(checked
+                                        ? new Set(instances.map((i) => i.id))
+                                        : new Set(currentInstanceId ? [currentInstanceId] : [instances[0]?.id]));
                                     setRetryInstances([]);
                                     setErrorInfo(null);
                                     setBypassAllowlist(false);
@@ -400,7 +416,76 @@ export function AddDecisionModal({
                             />
                             {t('pages.decisions.allInstances')}
                         </label>
-                        {currentInstanceId && !allInstances && (
+                        {!allInstances && instances.length > 1 && (
+                            <div className="space-y-1.5 pt-1">
+                                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                    <span>{t('pages.decisions.targetScope')}</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedInstanceIds(new Set(instances.map((i) => i.id)));
+                                                setAllInstances(true);
+                                                setRetryInstances([]);
+                                                setErrorInfo(null);
+                                                setBypassAllowlist(false);
+                                            }}
+                                            className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium cursor-pointer"
+                                        >
+                                            {t('pages.decisions.selectAll')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedInstanceIds(new Set(currentInstanceId ? [currentInstanceId] : []));
+                                                setRetryInstances([]);
+                                                setErrorInfo(null);
+                                                setBypassAllowlist(false);
+                                            }}
+                                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 font-medium cursor-pointer"
+                                        >
+                                            {t('pages.decisions.deselectAll')}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {instances.map((instance) => {
+                                        const isSelected = selectedInstanceIds.has(instance.id);
+                                        return (
+                                            <button
+                                                key={instance.id}
+                                                type="button"
+                                                disabled={inProgress}
+                                                onClick={() => {
+                                                    const next = new Set(selectedInstanceIds);
+                                                    if (isSelected) {
+                                                        if (next.size > 1) next.delete(instance.id);
+                                                    } else {
+                                                        next.add(instance.id);
+                                                    }
+                                                    if (next.size === instances.length) {
+                                                        setAllInstances(true);
+                                                    }
+                                                    setSelectedInstanceIds(next);
+                                                    setRetryInstances([]);
+                                                    setErrorInfo(null);
+                                                    setBypassAllowlist(false);
+                                                }}
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700'
+                                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                                }`}
+                                            >
+                                                <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                                                {instance.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                        {currentInstanceId && !allInstances && selectedInstanceIds.size === 1 && selectedInstanceIds.has(currentInstanceId) && (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {t('pages.decisions.currentInstance', { name: currentInstanceName || currentInstanceId })}
                             </p>
@@ -408,6 +493,15 @@ export function AddDecisionModal({
                         {allInstances && targetInstances.length > 0 && (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {t('pages.decisions.targetInstances', { names: targetInstances.map((instance) => instance.name).join(', ') })}
+                            </p>
+                        )}
+                        {!allInstances && (selectedInstanceIds.size > 1 || (selectedInstanceIds.size === 1 && !selectedInstanceIds.has(currentInstanceId || ''))) && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {t('pages.decisions.targetInstancesSelected', {
+                                    count: selectedInstanceIds.size,
+                                    total: instances.length,
+                                    names: targetInstances.map((instance) => instance.name).join(', '),
+                                })}
                             </p>
                         )}
                     </div>

@@ -58,7 +58,7 @@ import {
     type SearchDateRange,
     type SearchParseError,
 } from "../../../shared/search";
-import { Trash2, Gavel, X, ExternalLink, Shield, ShieldBan, AlertCircle, Columns3, Loader2 } from "lucide-react";
+import { Trash2, Gavel, X, ExternalLink, Shield, ShieldBan, AlertCircle, Columns3, Loader2, Globe } from "lucide-react";
 import type { ApiPermissionError, BulkDeleteResult, DecisionListItem, FacetField, InstanceEntityRef, InstanceOperationResult, InstanceSummary, TableColumnId, TableColumnPreferences } from '../types';
 import { useI18n, type I18nContextValue } from "../lib/i18n";
 import { getBrowserTimeZone, useDateTime } from "../lib/dateTime";
@@ -209,6 +209,7 @@ export function Decisions() {
     const [backgroundLoading, setBackgroundLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [propagateDecision, setPropagateDecision] = useState<DecisionListItem | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalDecisions, setTotalDecisions] = useState(0);
@@ -1624,6 +1625,25 @@ export function Decisions() {
                                             {canManageEnforcement && (
                                                 <td className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${isExpired ? STICKY_ACTIONS_EXPIRED_CELL_CLASS_NAME : STICKY_ACTIONS_CELL_CLASS_NAME}`}>
                                                     <div className="flex items-center justify-end gap-2">
+                                                        {multipleInstances && decision.value && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPendingDeleteErrorInfo(null);
+                                                                    setPropagateDecision(decision);
+                                                                }}
+                                                                disabled={isExpired}
+                                                                className={`transition-colors p-2 rounded-full relative z-10 cursor-pointer ${
+                                                                    isExpired
+                                                                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
+                                                                        : 'text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                                                                }`}
+                                                                title={isExpired ? t('pages.decisions.alreadyExpired') : t('pages.decisions.propagateToFleet')}
+                                                                aria-label={isExpired ? t('pages.decisions.alreadyExpired') : t('pages.decisions.propagateToFleet')}
+                                                            >
+                                                                <Globe size={16} aria-hidden="true" />
+                                                            </button>
+                                                        )}
                                                         {decision.value && (
                                                             <button
                                                                 onClick={() => {
@@ -1728,6 +1748,27 @@ export function Decisions() {
                     defaultAllInstances={!searchParams.get('instance') || searchParams.get('instance') === 'all'}
                     onClose={() => setShowAddModal(false)}
                     onDecisionAdded={() => loadDecisions({ page: 1, refreshConfig: true, forceRefresh: true })}
+                />
+            )}
+            {propagateDecision && (
+                <AddDecisionModal
+                    initialDecision={{
+                        ip: propagateDecision.value || "",
+                        duration: (propagateDecision.detail.duration || "4h"),
+                        reason: propagateDecision.message || "manual",
+                        type: propagateDecision.detail.action === 'captcha' ? 'captcha' : 'ban',
+                        scenario: propagateDecision.scenario,
+                    }}
+                    instances={instances}
+                    multipleInstances={multipleInstances}
+                    currentInstanceId={propagateDecision.instance_id}
+                    currentInstanceName={instanceNames[propagateDecision.instance_id || '']}
+                    defaultAllInstances={true}
+                    onClose={() => setPropagateDecision(null)}
+                    onDecisionAdded={async () => {
+                        setPropagateDecision(null);
+                        await loadDecisions({ page: 1, refreshConfig: true, forceRefresh: true });
+                    }}
                 />
             )}
             <SearchSyntaxModal
