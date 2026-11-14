@@ -387,6 +387,7 @@ export function createController(options: {
   database?: CrowdsecDatabase;
   initialCacheState?: CreateAppOptions['initialCacheState'];
   attackLocationResolver?: CreateAppOptions['attackLocationResolver'];
+  threatIntelService?: CreateAppOptions['threatIntelService'];
 } = {}) {
   const authMode = options.authMode || 'password';
   const mtlsCertPath = path.join(tempDir, 'agent.pem');
@@ -521,6 +522,7 @@ export function createController(options: {
     analyticsQueryWorker: options.analyticsQueryWorker,
     facetQueryWorker: options.facetQueryWorker,
     initialCacheState: options.initialCacheState,
+    threatIntelService: options.threatIntelService,
   });
 
   return { controller, database, lapiClient, fetchCalls };

@@ -33,6 +33,7 @@ import type {
   SlimAlert,
   StatsAlert,
   StatsDecision,
+  ThreatIntelLookupResponse,
   UpdateMetricsSidebarPreferenceRequest,
   UpdateAllowlistsSidebarPreferenceRequest,
   UpdateStatisticsSidebarPreferenceRequest,
@@ -623,3 +624,8 @@ export async function bulkDeleteNotifications(ids: BulkDeleteRequest['ids']): Pr
 export async function deleteReadNotifications(): Promise<void> {
     await sendJson('/api/notifications/delete-read', { method: 'POST' }, 'Failed to delete read notifications');
 }
+
+export async function fetchThreatIntelLookup(ip: string): Promise<ThreatIntelLookupResponse> {
+    return fetchJson<ThreatIntelLookupResponse>(`/api/threat-intel/lookup?ip=${encodeURIComponent(ip)}`, undefined, 'Failed to fetch threat intelligence');
+}
+

@@ -21,6 +21,7 @@ import { TimeDisplay } from "../components/TimeDisplay";
 import { TargetDisplay } from "../components/TargetDisplay";
 import { EventCard } from "../components/EventCard";
 import { ContextSummary } from "../components/ContextSummary";
+import { ThreatIntelOverlay } from "../components/ThreatIntelOverlay";
 import { Collapsible } from "../components/ui/Collapsible";
 import { HorizontalScrollArea } from "../components/ui/HorizontalScrollArea";
 import { ResizableColumnHeader, TableColumnGroup } from "../components/ui/ResizableColumnHeader";
@@ -2707,6 +2708,12 @@ export function Alerts() {
                                 />
                             </div>
                         </div>
+
+                        {/* Threat Intelligence Overlay */}
+                        {selectedAlertSourceValue && !isUnspecifiedSourceAddress(selectedAlertSourceValue) && (
+                            <ThreatIntelOverlay ip={selectedAlertSourceValue} />
+                        )}
+
 
                         {/* Message */}
                         {(selectedAlert.message || selectedAlertIsAppSec) && (

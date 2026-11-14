@@ -1035,3 +1035,6 @@ export interface BulkDeleteResult {
 export interface DeleteResult {
   message: string;
 }
+
+export * from './threat-intel';
+
