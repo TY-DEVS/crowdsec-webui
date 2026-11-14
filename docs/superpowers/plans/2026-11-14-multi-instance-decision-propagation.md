@@ -26,7 +26,7 @@
 - Consumes: None
 - Produces: `AddDecisionRequest.scope` supporting `'selected'`, and `AddDecisionRequest.instance_ids?: string[]`.
 
-- [ ] **Step 1: Update AddDecisionRequest interface**
+- [x] **Step 1: Update AddDecisionRequest interface**
 
 Update `AddDecisionRequest` in `shared/contracts.ts`:
 ```typescript
@@ -44,12 +44,12 @@ export interface AddDecisionRequest {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 Run: `pnpm run typecheck`  
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add shared/contracts.ts
@@ -69,19 +69,19 @@ git commit -m "feat(shared): add selected scope and instance_ids to AddDecisionR
 - Consumes: `AddDecisionRequest.scope`, `AddDecisionRequest.instance_ids`
 - Produces: Updated `resolveOperationInstances` supporting `scope: 'selected'` and array of targets.
 
-- [ ] **Step 1: Write the failing backend test**
+- [x] **Step 1: Write the failing backend test**
 
 Create `server/__tests__/app/api-decisions-propagation.test.ts` testing:
 1. `resolveOperationInstances` with `scope: 'selected'` and valid `instance_ids`.
 2. `resolveOperationInstances` with invalid `instance_ids` returning error.
 3. `/api/decisions` endpoint receiving `scope: 'selected'` and `instance_ids`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm exec vitest run server/__tests__/app/api-decisions-propagation.test.ts`  
 Expected: FAIL
 
-- [ ] **Step 3: Update resolveOperationInstances and api-routes**
+- [x] **Step 3: Update resolveOperationInstances and api-routes**
 
 In `server/app.ts`:
 ```typescript
@@ -107,12 +107,12 @@ function resolveOperationInstances(
 In `server/app/api-routes.ts`:
 Pass `body.instance_ids` into `resolveOperationInstances(body.scope, body.instance_id, body.instance_ids)` in both `/api/decisions` and `/api/decisions/bulk-add`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm exec vitest run server/__tests__/app/api-decisions-propagation.test.ts`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server/app.ts server/app/api-routes.ts server/__tests__/app/api-decisions-propagation.test.ts
@@ -130,7 +130,7 @@ git commit -m "feat(server): support selected scope and instance_ids in decision
 - Consumes: None
 - Produces: UI translation keys for fleet decision propagation and target instance selection.
 
-- [ ] **Step 1: Add translation strings**
+- [x] **Step 1: Add translation strings**
 
 Add keys under `pages.decisions`:
 - `propagateToFleet`: "Propagate ban to fleet"
@@ -142,7 +142,7 @@ Add keys under `pages.decisions`:
 - `deselectAll`: "Deselect All"
 - `targetInstancesSelected`: "Targeting {{count}} of {{total}} instances: {{names}}"
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add client/src/locales/en.json
@@ -161,19 +161,19 @@ git commit -m "feat(i18n): add translations for fleet decision propagation"
 - Consumes: `instances: CrowdsecInstanceConfig[]`, `multipleInstances: boolean`, `currentInstanceId?: string`, `defaultAllInstances?: boolean`
 - Produces: Interactive instance target selection (current, all, or custom checkboxes), combined allowlist check across all targets, scenario intersection fallback.
 
-- [ ] **Step 1: Write failing component test**
+- [x] **Step 1: Write failing component test**
 
 Add tests to verify:
 1. When `multipleInstances` is true, renders target selector.
 2. Selecting custom instances toggles checkboxes and includes their IDs in the submit payload.
 3. Allowlist check evaluates across all selected instance IDs.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm exec vitest run client/src/components/__tests__/AddDecisionModal.test.tsx`  
 Expected: FAIL
 
-- [ ] **Step 3: Implement targeting controls in AddDecisionModal**
+- [x] **Step 3: Implement targeting controls in AddDecisionModal**
 
 Refactor `AddDecisionModal.tsx`:
 - Maintain `targetMode: 'current' | 'all' | 'custom'`.
@@ -183,12 +183,12 @@ Refactor `AddDecisionModal.tsx`:
 - Update `submit()` and `submitBulk()` to pass `scope: targetMode === 'all' ? 'all' : targetMode === 'custom' ? 'selected' : 'instance'` and `instance_ids: Array.from(selectedInstanceIds)`.
 - Update `allowlistScope` to pass `'all'` when in `all` or `custom` mode with $>1$ instance, or the single instance ID when only 1 instance is selected.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm exec vitest run client/src/components/__tests__/AddDecisionModal.test.tsx`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add client/src/components/AddDecisionModal.tsx client/src/components/__tests__/AddDecisionModal.test.tsx
@@ -207,29 +207,29 @@ git commit -m "feat(client): add granular multi-instance selector to AddDecision
 - Consumes: Decision row data (`value`, `duration`, `scenario`, `message`, `instance_id`)
 - Produces: Action button with `Globe` icon that opens `AddDecisionModal` configured for fleet propagation.
 
-- [ ] **Step 1: Write test for propagate row action**
+- [x] **Step 1: Write test for propagate row action**
 
 In `client/src/pages/__tests__/decisions/actions.test.tsx`:
 - Test that when `multipleInstances` is true, an active decision row renders the "Propagate ban to fleet" button.
 - Clicking the button opens `AddDecisionModal` with `defaultAllInstances={true}` and the IP pre-filled.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm exec vitest run client/src/pages/__tests__/decisions/actions.test.tsx`  
 Expected: FAIL
 
-- [ ] **Step 3: Implement propagate row action in Decisions.tsx**
+- [x] **Step 3: Implement propagate row action in Decisions.tsx**
 
 In `client/src/pages/Decisions.tsx`:
 - Add `Globe` icon button in table row actions when `multipleInstances && canManageEnforcement && !isExpired`.
 - On click, store `propagateDecision` state and open `AddDecisionModal`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm exec vitest run client/src/pages/__tests__/decisions/actions.test.tsx`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add client/src/pages/Decisions.tsx client/src/pages/__tests__/decisions/actions.test.tsx
@@ -248,16 +248,16 @@ git commit -m "feat(decisions): add propagate to fleet action button in decision
 - Consumes: Alert decision trigger
 - Produces: `AddDecisionModal` opened from alerts cleanly exposing fleet propagation options.
 
-- [ ] **Step 1: Verify and update Alerts.tsx integration**
+- [x] **Step 1: Verify and update Alerts.tsx integration**
 
 Ensure `AddDecisionModal` invocation in `Alerts.tsx` supports the enhanced multi-instance controls without regressions.
 
-- [ ] **Step 2: Run Alerts tests**
+- [x] **Step 2: Run Alerts tests**
 
 Run: `pnpm exec vitest run client/src/pages/__tests__/alerts/details-and-actions.test.tsx`  
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add client/src/pages/Alerts.tsx
@@ -270,22 +270,22 @@ git commit -m "feat(alerts): integrate enhanced fleet decision modal in alerts p
 
 **Files:** All modified files
 
-- [ ] **Step 1: Run TypeScript compiler**
+- [x] **Step 1: Run TypeScript compiler**
 
 Run: `pnpm run typecheck`  
 Expected: Clean exit 0 with no errors.
 
-- [ ] **Step 2: Run ESLint**
+- [x] **Step 2: Run ESLint**
 
 Run: `pnpm run lint`  
 Expected: Clean exit 0.
 
-- [ ] **Step 3: Run targeted test suite**
+- [x] **Step 3: Run targeted test suite**
 
 Run: `pnpm exec vitest run server/__tests__/app/api-decisions-propagation.test.ts client/src/components/__tests__/AddDecisionModal.test.tsx client/src/pages/__tests__/decisions/actions.test.tsx`  
 Expected: All passing.
 
-- [ ] **Step 4: Run production build**
+- [x] **Step 4: Run production build**
 
 Run: `pnpm run build`  
 Expected: Vite build + tsup finish successfully.
