@@ -1,4 +1,8 @@
 import type {
+  AuditLogItem,
+  AuditLogListResponse,
+  AuditLogQueryFilters,
+  AuditLogQueryParams,
   AddDecisionRequest,
   BulkAddDecisionRequest,
   BulkAddDecisionResponse,
@@ -623,3 +627,37 @@ export async function bulkDeleteNotifications(ids: BulkDeleteRequest['ids']): Pr
 export async function deleteReadNotifications(): Promise<void> {
     await sendJson('/api/notifications/delete-read', { method: 'POST' }, 'Failed to delete read notifications');
 }
+
+export function buildAuditLogQueryString(params: AuditLogQueryParams = {}): string {
+    const searchParams = new URLSearchParams();
+    if (params.page !== undefined) searchParams.set('page', String(params.page));
+    if (params.pageSize !== undefined) searchParams.set('page_size', String(params.pageSize));
+    if (params.action) searchParams.set('action', params.action);
+    if (params.user) searchParams.set('user', params.user);
+    if (params.ip) searchParams.set('ip', params.ip);
+    if (params.outcome) searchParams.set('outcome', params.outcome);
+    if (params.from) searchParams.set('from', params.from);
+    if (params.to) searchParams.set('to', params.to);
+    if (params.q) searchParams.set('q', params.q);
+    const query = searchParams.toString();
+    return query ? `?${query}` : '';
+}
+
+export async function fetchAuditLogs(params: AuditLogQueryParams = {}): Promise<AuditLogListResponse> {
+    const query = buildAuditLogQueryString(params);
+    return fetchJson<AuditLogListResponse>(`/api/audit-logs${query}`, undefined, 'Failed to fetch audit logs');
+}
+
+export function getAuditLogsExportUrl(filters: AuditLogQueryFilters = {}, format: 'csv' | 'json' = 'csv'): string {
+    const searchParams = new URLSearchParams();
+    if (filters.action) searchParams.set('action', filters.action);
+    if (filters.user) searchParams.set('user', filters.user);
+    if (filters.ip) searchParams.set('ip', filters.ip);
+    if (filters.outcome) searchParams.set('outcome', filters.outcome);
+    if (filters.from) searchParams.set('from', filters.from);
+    if (filters.to) searchParams.set('to', filters.to);
+    if (filters.q) searchParams.set('q', filters.q);
+    searchParams.set('format', format);
+    return apiUrl(`/api/audit-logs?${searchParams.toString()}`);
+}
+

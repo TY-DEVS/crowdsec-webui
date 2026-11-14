@@ -130,4 +130,86 @@ describe('createAuditLogger', () => {
       log.mockRestore();
     }
   });
+
+  test('queries entries with pagination and reverse-chronological ordering', () => {
+    const auditLog = createLogger();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      auditLog.record({}, { action: 'user.login', outcome: 'success', time: '2026-01-01T10:00:00.000Z' });
+      auditLog.record({}, { action: 'decision.add', ip: '1.1.1.1', outcome: 'success', time: '2026-01-01T11:00:00.000Z' });
+      auditLog.record({}, { action: 'decision.delete', outcome: 'success', time: '2026-01-01T12:00:00.000Z' });
+
+      const page1 = auditLog.query({ page: 1, pageSize: 2 });
+      expect(page1.pagination.total).toBe(3);
+      expect(page1.pagination.total_pages).toBe(2);
+      expect(page1.pagination.page).toBe(1);
+      expect(page1.pagination.page_size).toBe(2);
+      expect(page1.data).toHaveLength(2);
+      expect(page1.data[0].action).toBe('decision.delete');
+      expect(page1.data[1].action).toBe('decision.add');
+
+      const page2 = auditLog.query({ page: 2, pageSize: 2 });
+      expect(page2.data).toHaveLength(1);
+      expect(page2.data[0].action).toBe('user.login');
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  test('filters entries by action, outcome, user, ip, date range, and search query', () => {
+    const auditLog = createLogger();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      auditLog.record({}, { action: 'decision.add', ip: '10.0.0.1', outcome: 'success', reason: 'ssh brute force', time: '2026-03-01T10:00:00.000Z' });
+      auditLog.record({}, { action: 'decision.add', ip: '10.0.0.2', outcome: 'failure', reason: 'network error', time: '2026-03-02T10:00:00.000Z' });
+      auditLog.record({}, { action: 'user.login', outcome: 'success', target_username: 'alice', time: '2026-03-03T10:00:00.000Z' });
+      auditLog.record({}, { action: 'alert.delete', outcome: 'queued', alert_ids: ['100', '101'], time: '2026-03-04T10:00:00.000Z' });
+
+      // Action filter
+      expect(auditLog.query({ action: 'decision.add' }).pagination.total).toBe(2);
+      expect(auditLog.query({ action: 'decision.add,alert.delete' }).pagination.total).toBe(3);
+
+      // Outcome filter
+      expect(auditLog.query({ outcome: 'failure' }).pagination.total).toBe(1);
+      expect(auditLog.query({ outcome: 'success' }).pagination.total).toBe(2);
+
+      // IP filter
+      expect(auditLog.query({ ip: '10.0.0.1' }).pagination.total).toBe(1);
+      expect(auditLog.query({ ip: '10.0.0' }).pagination.total).toBe(2);
+
+      // Date range filter
+      const dateFiltered = auditLog.query({ from: '2026-03-02T00:00:00.000Z', to: '2026-03-03T23:59:59.999Z' });
+      expect(dateFiltered.pagination.total).toBe(2);
+
+      // Free text search query q
+      expect(auditLog.query({ q: 'brute force' }).pagination.total).toBe(1);
+      expect(auditLog.query({ q: 'alice' }).pagination.total).toBe(1);
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  test('exportEntries returns filtered entries and formats valid CSV', async () => {
+    const auditLog = createLogger();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      auditLog.record({}, { action: 'decision.add', ip: '192.168.1.1', type: 'ban', outcome: 'success', reason: 'port scan, web', time: '2026-05-01T12:00:00.000Z' });
+      auditLog.record({}, { action: 'user.login', outcome: 'success', auth_method: 'password', time: '2026-05-01T13:00:00.000Z' });
+
+      const exported = auditLog.exportEntries({ action: 'decision.add' });
+      expect(exported).toHaveLength(1);
+      expect(exported[0].ip).toBe('192.168.1.1');
+
+      const { formatAuditLogsAsCsv } = await import('../../audit-log');
+      const csv = formatAuditLogsAsCsv(exported);
+      expect(csv).toContain('Time,User,Role,Action,Outcome,Target,Details');
+      expect(csv).toContain('192.168.1.1');
+      expect(csv).toContain('decision.add');
+      expect(csv).toContain('success');
+      // Commas inside reasons/details must be escaped in quotes
+      expect(csv).toMatch(/"port scan, web"/);
+    } finally {
+      log.mockRestore();
+    }
+  });
 });

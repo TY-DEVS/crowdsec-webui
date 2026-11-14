@@ -75,6 +75,8 @@ export function Layout() {
                 return t('pages.allowlists.title');
             case '/metrics':
                 return t('pages.metrics.title');
+            case '/audit-logs':
+                return t('pages.auditLogs.title');
             case '/notifications':
                 return t('pages.notifications.title');
             case '/settings':

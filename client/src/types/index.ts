@@ -95,6 +95,10 @@ export type {
   UpdateManualDecisionScenariosRequest,
   ManualDecisionScenarioSettings,
   UpdateCheckResponse,
+  AuditLogItem,
+  AuditLogQueryFilters,
+  AuditLogQueryParams,
+  AuditLogListResponse,
 } from '../../../shared/contracts';
 
 export interface DateRangeSelection {

@@ -1035,3 +1035,48 @@ export interface BulkDeleteResult {
 export interface DeleteResult {
   message: string;
 }
+
+export interface AuditLogItem {
+  time: string;
+  user: string;
+  role?: string;
+  action: string;
+  outcome: string;
+  ip?: string;
+  values?: string[];
+  type?: string;
+  scenario?: string;
+  duration?: string;
+  reason?: string;
+  instances?: string[];
+  instance_results?: Array<{ instance?: string; instance_name?: string; outcome?: string; error?: string }>;
+  target_results?: Array<{ id?: string; value?: string; outcome?: string; error?: string }>;
+  alert_ids?: string[];
+  decision_ids?: string[];
+  target_user_id?: number;
+  target_username?: string;
+  auth_method?: string;
+  bypass_allowlist?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AuditLogQueryFilters {
+  action?: string;
+  user?: string;
+  ip?: string;
+  outcome?: string;
+  from?: string;
+  to?: string;
+  q?: string;
+}
+
+export interface AuditLogQueryParams extends AuditLogQueryFilters {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AuditLogListResponse {
+  data: AuditLogItem[];
+  pagination: PaginationMeta;
+}
+

@@ -18,6 +18,7 @@ const Alerts = lazy(async () => ({ default: (await import('./pages/Alerts')).Ale
 const Decisions = lazy(async () => ({ default: (await import('./pages/Decisions')).Decisions }));
 const Allowlists = lazy(async () => ({ default: (await import('./pages/Allowlists')).Allowlists }));
 const Metrics = lazy(async () => ({ default: (await import('./pages/Metrics')).Metrics }));
+const AuditLogs = lazy(async () => ({ default: (await import('./pages/AuditLogs')).AuditLogs }));
 const Notifications = lazy(async () => ({ default: (await import('./pages/Notifications')).Notifications }));
 const Settings = lazy(async () => ({ default: (await import('./pages/Settings')).Settings }));
 const Login = lazy(async () => ({ default: (await import('./pages/Login')).Login }));
@@ -104,6 +105,14 @@ function ProtectedAppShell() {
             element={(
               <Suspense fallback={<RouteFallback />}>
                 <Metrics />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="audit-logs"
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <AuditLogs />
               </Suspense>
             )}
           />

@@ -22,6 +22,10 @@ vi.mock('../pages/Alerts', () => ({
   Alerts: () => <div>Alerts Page</div>,
 }));
 
+vi.mock('../pages/AuditLogs', () => ({
+  AuditLogs: () => <div>Audit Logs Page</div>,
+}));
+
 vi.mock('../pages/Decisions', () => ({
   Decisions: () => <div>Decisions Page</div>,
 }));
@@ -65,6 +69,12 @@ describe('App lazy routes', () => {
     window.history.pushState({}, '', '/alerts');
     render(<App />);
     await waitFor(() => expect(screen.getByText('Alerts Page')).toBeInTheDocument());
+  });
+
+  test('renders the lazy audit-logs route', async () => {
+    window.history.pushState({}, '', '/audit-logs');
+    render(<App />);
+    await waitFor(() => expect(screen.getByText('Audit Logs Page')).toBeInTheDocument());
   });
 
   test('renders the lazy notifications route', async () => {

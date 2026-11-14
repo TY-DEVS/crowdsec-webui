@@ -1679,6 +1679,7 @@ export function createDashboardAuth(options: {
       });
       if (!user) return context.json({ error: 'Setup already completed' }, 400);
       createSession(context, user, 'password');
+      recordUserAudit(context, 'user.login', user, { auth_method: 'password' });
       return context.json({ status: 'ok', user: { userId: user.id, username: user.username, role: user.role } });
     });
 
@@ -1707,6 +1708,7 @@ export function createDashboardAuth(options: {
       }
 
       createSession(context, user, 'password');
+      recordUserAudit(context, 'user.login', user, { auth_method: 'password' });
       return context.json({ status: 'ok', user: { userId: user.id, username: user.username, role: user.role } });
     });
 
@@ -2123,6 +2125,7 @@ export function createDashboardAuth(options: {
         if (!verification.verified) return context.json({ error: 'Verification failed' }, 400);
         await writeDatabase(() => database.updateWebAuthnCredentialCounter(credential.id, verification.authenticationInfo.newCounter));
         createSession(context, user, 'passkey');
+        recordUserAudit(context, 'user.login', user, { auth_method: 'passkey' });
         deleteCookie(context, CHALLENGE_COOKIE, { path: cookiePath });
         return context.json({ status: 'ok', user: { userId: user.id, username: user.username, role: user.role } });
       } catch (error) {
@@ -2206,6 +2209,7 @@ export function createDashboardAuth(options: {
           recordUserAudit(context, 'user.oidc-link', user, { user: result.username, method: 'username', issuer: result.issuer, oidc_username: result.username });
         }
         createSession(context, user, 'oidc', undefined, result.sessionId);
+        recordUserAudit(context, 'user.login', user, { auth_method: 'oidc' });
         // Kept as id_token_hint for RP-initiated logout. Oversized tokens are
         // skipped; logout then falls back to client_id only.
         if (result.idToken && result.idToken.length <= MAX_ID_TOKEN_COOKIE_LENGTH) {

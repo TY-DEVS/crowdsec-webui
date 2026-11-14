@@ -67,6 +67,7 @@ import { getAlertSourceValue, getAlertTargets, getAlertTargetSummary, resolveAle
 import { parseGoDuration, toDuration } from './utils/duration';
 import { fetchCrowdsecMetrics, fetchCrowdsecMetricsSamples, summarizeCrowdsecMetrics } from './metrics';
 import { DatabaseQueryWorker, QueryWorkerTimeoutError } from './query-worker-client';
+import { registerAuditLogRoutes } from './app/audit-log-routes';
 import { registerApiRoutes } from './app/api-routes';
 import { registerSavedFilterRoutes } from './app/saved-filters';
 import { registerBrandingRoutes } from './app/branding-routes';
@@ -1369,6 +1370,7 @@ export function createApp(options: CreateAppOptions = {}): AppController {
     isValidIpOrRange,
   });
   registerStatisticsRoutes({ app, config, statistics, ensureAuth, ensureCanManageSettings });
+  registerAuditLogRoutes({ app, basePath: config.basePath, auditLog, ensureAuth });
   registerApiRoutes({
     statistics,
     app,
