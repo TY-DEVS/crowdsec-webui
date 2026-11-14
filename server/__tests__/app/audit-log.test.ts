@@ -32,6 +32,7 @@ describe('audit log', () => {
       }));
       expect(setupResponse.status).toBe(200);
       const sessionCookie = String(setupResponse.headers.get('set-cookie')).split(';')[0];
+      logSpy.mockClear();
 
       await lapiClient.login();
       const response = await controller.fetch(new Request('http://localhost/crowdsec/api/decisions', {

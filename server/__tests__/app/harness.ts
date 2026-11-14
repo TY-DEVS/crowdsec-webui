@@ -355,7 +355,11 @@ beforeEach(() => {
 });
 
 export function destroyTempDir(): void {
-  rmSync(tempDir, { recursive: true, force: true });
+  try {
+    rmSync(tempDir, { recursive: true, force: true });
+  } catch {
+    // Windows file locks may keep temp handles open briefly
+  }
 }
 
 export function createTestDistRoot(): string {
