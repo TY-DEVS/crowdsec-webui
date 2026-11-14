@@ -872,8 +872,9 @@ export interface AddDecisionRequest {
   reason?: string;
   type?: 'ban' | 'captcha';
   scenario?: string;
-  scope?: 'all' | 'instance';
+  scope?: 'all' | 'instance' | 'selected';
   instance_id?: string;
+  instance_ids?: string[];
   /** LAPI trusts decisions sent with an alert, so allowlists are checked here unless this is set. */
   bypass_allowlist?: boolean;
 }
@@ -966,8 +967,9 @@ export interface BulkDeleteRequest {
 
 export interface CleanupByIpRequest {
   ip: string;
-  scope?: 'all' | 'instance';
+  scope?: 'all' | 'instance' | 'selected';
   instance_id?: string;
+  instance_ids?: string[];
 }
 
 export interface InstanceOperationResult {
